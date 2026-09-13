@@ -490,10 +490,17 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script>
-  document.querySelectorAll('.book-tab').forEach(tab=>{
+  // Trip type now actually affects the fare: Round Trip charges for the
+  // return leg too (distance x2), matching how outstation cabs are priced.
+  let tripType = 'oneway'; // 'oneway' | 'roundtrip' | 'airport'
+  const TAB_TYPES = ['oneway', 'roundtrip', 'airport'];
+
+  document.querySelectorAll('.book-tab').forEach((tab, i)=>{
     tab.addEventListener('click', ()=>{
       document.querySelectorAll('.book-tab').forEach(t=>t.classList.remove('active'));
       tab.classList.add('active');
+      tripType = TAB_TYPES[i];
+      calculateDistance(); // refresh fare immediately if a route is already set
     });
   });
 
@@ -633,12 +640,21 @@
         }
 
         const route = data.routes[0];
-        const distanceKm = route.distance / 1000;
-        const durationMin = Math.round(route.duration / 60);
+        const onewayKm = route.distance / 1000;
+        const onewayDurationMin = Math.round(route.duration / 60);
         const perKm = parseFloat(document.getElementById('carType').value);
+
+        // Round trip = driver covers the return leg too, so both distance
+        // and duration shown (and the fare) are doubled. One Way / Airport
+        // stay as the single-leg figures.
+        const isRoundTrip = tripType === 'roundtrip';
+        const distanceKm = isRoundTrip ? onewayKm * 2 : onewayKm;
+        const durationMin = isRoundTrip ? onewayDurationMin * 2 : onewayDurationMin;
         const fare = Math.round(distanceKm * perKm);
 
-        document.getElementById('distanceText').textContent = `${distanceKm.toFixed(1)} km`;
+        document.getElementById('distanceText').textContent = isRoundTrip
+          ? `${distanceKm.toFixed(1)} km (round trip)`
+          : `${distanceKm.toFixed(1)} km`;
         document.getElementById('durationText').textContent = durationMin < 60
           ? `${durationMin} min`
           : `${Math.floor(durationMin/60)} hr ${durationMin%60} min`;
@@ -653,9 +669,10 @@
           lastFareCheckKey = routeKey;
           sendNotification('Someone checked a fare on your website', {
             'Phone Number': phone,
+            'Trip Type': tripType === 'roundtrip' ? 'Round Trip' : (tripType === 'airport' ? 'Airport' : 'One Way'),
             'Pickup': document.getElementById('pickupInput').value,
             'Drop': document.getElementById('dropInput').value,
-            'Distance': `${distanceKm.toFixed(1)} km`,
+            'Distance': `${distanceKm.toFixed(1)} km${isRoundTrip ? ' (round trip)' : ''}`,
             'Estimated Fare': `₹${fare}`,
             'Car Type': document.getElementById('carType').selectedOptions[0].textContent
           });
