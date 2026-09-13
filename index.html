@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kashi Cabs — Reliable Taxi Service in Varanasi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  :root{
+    --stone:#F5EDE3;
+    --stone-2:#EDE1D0;
+    --ink:#232323;
+    --ink-soft:#5B5650;
+    --indigo:#1B2540;
+    --indigo-2:#131A2E;
+    --terracotta:#C1573D;
+    --terracotta-dark:#A6432B;
+    --marigold:#E8A33D;
+    --white:#FFFDF9;
+    --line:rgba(35,35,35,0.1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{ background:var(--stone); color:var(--ink); font-family:'Inter',sans-serif; line-height:1.6; }
+  h1,h2,h3,h4{ font-family:'Fraunces',serif; font-weight:600; color:var(--indigo); }
+  a{color:inherit; text-decoration:none;}
+  img{max-width:100%; display:block;}
+  .wrap{max-width:1180px; margin:0 auto; padding:0 32px;}
+  button{font-family:'Inter',sans-serif; cursor:pointer;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+  }
+
+  header{ position:sticky; top:0; z-index:100; background:rgba(245,237,227,0.92); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); }
+  nav{ display:flex; align-items:center; justify-content:space-between; padding:18px 0; }
+  .brand{ font-family:'Fraunces',serif; font-size:22px; font-weight:600; color:var(--indigo); display:flex; align-items:center; gap:10px; }
+  .brand .mark{ width:34px; height:34px; border-radius:9px; background:var(--terracotta); color:var(--white); display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; }
+  .navlinks{ display:flex; gap:36px; font-size:15px; color:var(--ink); }
+  .navlinks a{ transition:color .25s ease; }
+  .navlinks a:hover{ color:var(--terracotta); }
+  .navphone{ display:flex; align-items:center; gap:10px; font-weight:600; font-size:15px; }
+  .navphone .ico{ width:36px; height:36px; border-radius:50%; background:var(--terracotta); color:var(--white); display:flex; align-items:center; justify-content:center; }
+  .navmenu-btn{ display:none; background:none; border:none; font-size:24px; color:var(--indigo); }
+
+  .hero{ padding:70px 0 100px; position:relative; overflow:hidden; }
+  .hero-grid{ display:grid; grid-template-columns:1.1fr 0.9fr; gap:60px; align-items:start; }
+  .hero-tag{ display:inline-flex; align-items:center; gap:8px; background:var(--white); border:1px solid var(--line); padding:8px 16px; border-radius:100px; font-size:13.5px; color:var(--terracotta-dark); font-weight:600; margin-bottom:26px; }
+  .hero h1{ font-size:54px; line-height:1.12; margin-bottom:22px; }
+  .hero h1 .accent{ color:var(--terracotta); font-style:italic; }
+  .hero-copy p{ font-size:18px; color:var(--ink-soft); max-width:480px; margin-bottom:36px; }
+  .hero-stats{ display:flex; gap:36px; margin-top:20px; }
+  .hero-stats .stat b{ font-family:'Fraunces',serif; font-size:28px; color:var(--indigo); display:block; }
+  .hero-stats .stat span{ font-size:13px; color:var(--ink-soft); }
+
+  .book-card{ background:var(--indigo); border-radius:22px; padding:34px; color:var(--white); box-shadow:0 30px 60px -20px rgba(27,37,64,0.4); }
+  .book-card h3{ color:var(--white); font-size:22px; margin-bottom:6px; }
+  .book-card > p{ color:rgba(255,255,255,0.6); font-size:14px; margin-bottom:24px; }
+  .book-tabs{ display:flex; gap:8px; margin-bottom:22px; background:rgba(255,255,255,0.08); padding:5px; border-radius:12px; }
+  .book-tab{ flex:1; text-align:center; padding:10px; border-radius:9px; font-size:13.5px; font-weight:600; color:rgba(255,255,255,0.65); background:none; border:none; transition:background .25s ease, color .25s ease; }
+  .book-tab.active{ background:var(--terracotta); color:var(--white); }
+  .book-field{ margin-bottom:16px; }
+  .book-field label{ font-size:12.5px; color:rgba(255,255,255,0.55); display:block; margin-bottom:7px; }
+  .book-field select, .book-field input{
+    width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15);
+    color:var(--white); padding:13px 14px; border-radius:10px; font-size:14.5px; outline:none;
+  }
+  .book-field select option{ color:var(--ink); }
+  .book-field input::placeholder{ color:rgba(255,255,255,0.4); }
+  .book-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .book-submit{ width:100%; background:var(--marigold); color:var(--indigo-2); border:none; padding:15px; border-radius:10px; font-weight:700; font-size:15px; margin-top:6px; transition:transform .25s ease, box-shadow .25s ease; }
+  .book-submit:hover{ transform:translateY(-2px); box-shadow:0 12px 26px -8px rgba(232,163,61,0.5); }
+  .book-note{ font-size:12.5px; color:rgba(255,255,255,0.45); text-align:center; margin-top:12px; }
+
+  .suggest-box{
+    position:absolute; top:100%; left:0; right:0; z-index:50; margin-top:4px;
+    background:var(--indigo-2); border:1px solid rgba(255,255,255,0.15); border-radius:10px;
+    overflow:hidden; display:none; max-height:220px; overflow-y:auto;
+  }
+  .suggest-item{ padding:11px 14px; font-size:13.5px; color:rgba(255,255,255,0.85); cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.06); }
+  .suggest-item:last-child{ border-bottom:none; }
+  .suggest-item:hover, .suggest-item.active{ background:rgba(255,255,255,0.08); color:var(--white); }
+  .suggest-loading{ padding:11px 14px; font-size:13px; color:rgba(255,255,255,0.4); }
+  .route-map{ display:none; width:100%; height:180px; border-radius:10px; overflow:hidden; margin-top:14px; border:1px solid rgba(255,255,255,0.15); }
+
+  section{ padding:100px 0; }
+  .section-tag{ color:var(--terracotta); font-size:13px; letter-spacing:0.06em; font-weight:700; text-transform:uppercase; margin-bottom:14px; }
+  .section-head{ max-width:620px; margin-bottom:56px; }
+  .section-head h2{ font-size:38px; line-height:1.2; }
+  .section-head p{ color:var(--ink-soft); font-size:16.5px; margin-top:16px; }
+
+  .fleet{ background:var(--white); }
+  .fleet-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:26px; }
+  .fleet-card{ border:1px solid var(--line); border-radius:18px; overflow:hidden; background:var(--stone); transition:transform .3s ease, box-shadow .3s ease; }
+  .fleet-card:hover{ transform:translateY(-6px); box-shadow:0 20px 40px -18px rgba(35,35,35,0.2); }
+  .fleet-img{ height:170px; background:linear-gradient(135deg,var(--indigo),var(--indigo-2)); display:flex; align-items:center; justify-content:center; font-size:50px; }
+  .fleet-body{ padding:24px; }
+  .fleet-body h4{ font-size:20px; margin-bottom:6px; }
+  .fleet-body .meta{ font-size:13.5px; color:var(--ink-soft); margin-bottom:14px; }
+  .fleet-body .price{ font-family:'Fraunces',serif; font-size:22px; color:var(--terracotta-dark); font-weight:600; }
+  .fleet-body .price span{ font-size:13px; color:var(--ink-soft); font-family:'Inter',sans-serif; font-weight:400; }
+
+  .routes-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+  .route-card{ background:var(--white); border:1px solid var(--line); border-radius:16px; padding:26px; display:flex; flex-direction:column; gap:8px; transition:border-color .3s ease; }
+  .route-card:hover{ border-color:var(--terracotta); }
+  .route-path{ display:flex; align-items:center; gap:10px; font-size:15px; font-weight:600; color:var(--indigo); }
+  .route-path .arrow{ color:var(--terracotta); }
+  .route-dist{ font-size:13px; color:var(--ink-soft); }
+  .route-price{ margin-top:10px; display:flex; align-items:baseline; justify-content:space-between; }
+  .route-price b{ font-family:'Fraunces',serif; font-size:22px; color:var(--terracotta-dark); }
+  .route-price a{ font-size:13.5px; font-weight:600; color:var(--indigo); border-bottom:1px solid var(--indigo); }
+
+  .why{ background:var(--indigo); color:var(--white); }
+  .why .section-tag{ color:var(--marigold); }
+  .why .section-head h2{ color:var(--white); }
+  .why .section-head p{ color:rgba(255,255,255,0.65); }
+  .why-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:30px; }
+  .why-item .icon{ width:52px; height:52px; border-radius:14px; background:rgba(232,163,61,0.15); color:var(--marigold); display:flex; align-items:center; justify-content:center; font-size:24px; margin-bottom:20px; }
+  .why-item h4{ color:var(--white); font-size:19px; margin-bottom:10px; }
+  .why-item p{ color:rgba(255,255,255,0.6); font-size:14.5px; }
+
+  .tours-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:24px; }
+  .tour-card{ background:var(--white); border-radius:18px; overflow:hidden; border:1px solid var(--line); }
+  .tour-img{ height:150px; background:linear-gradient(135deg,var(--terracotta),var(--marigold)); position:relative; }
+  .tour-badge{ position:absolute; top:14px; left:14px; background:rgba(255,255,255,0.9); color:var(--indigo); font-size:12px; font-weight:700; padding:5px 12px; border-radius:100px; }
+  .tour-body{ padding:22px; }
+  .tour-body h4{ font-size:19px; margin-bottom:8px; }
+  .tour-body p{ font-size:14.5px; color:var(--ink-soft); margin-bottom:14px; }
+  .tour-body .stops{ font-size:13px; color:var(--ink-soft); margin-bottom:16px; }
+  .tour-foot{ display:flex; justify-content:space-between; align-items:center; }
+  .tour-foot b{ font-family:'Fraunces',serif; color:var(--terracotta-dark); font-size:19px; }
+
+  .testi{ background:var(--white); }
+  .testi-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:26px; }
+  .testi-card{ background:var(--stone); border-radius:16px; padding:28px; }
+  .stars{ color:var(--marigold); font-size:15px; margin-bottom:14px; letter-spacing:2px; }
+  .testi-card p{ font-size:15px; color:var(--ink); margin-bottom:18px; }
+  .testi-who{ display:flex; align-items:center; gap:12px; }
+  .testi-avatar{ width:38px; height:38px; border-radius:50%; background:var(--indigo); color:var(--white); display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-size:15px; }
+  .testi-who b{ font-size:14px; display:block; }
+  .testi-who span{ font-size:12.5px; color:var(--ink-soft); }
+
+  .cta-band{ background:linear-gradient(135deg,var(--terracotta),var(--terracotta-dark)); padding:70px 0; text-align:center; color:var(--white); }
+  .cta-band h2{ color:var(--white); font-size:34px; margin-bottom:16px; }
+  .cta-band p{ color:rgba(255,255,255,0.85); margin-bottom:30px; }
+  .cta-buttons{ display:flex; gap:16px; justify-content:center; flex-wrap:wrap; }
+  .btn-white{ background:var(--white); color:var(--terracotta-dark); padding:15px 32px; border-radius:100px; font-weight:700; font-size:15px; transition:transform .25s ease; }
+  .btn-white:hover{ transform:translateY(-2px); }
+  .btn-outline-w{ border:1.5px solid rgba(255,255,255,0.7); color:var(--white); padding:15px 32px; border-radius:100px; font-weight:600; font-size:15px; transition:background .25s ease; }
+  .btn-outline-w:hover{ background:rgba(255,255,255,0.12); }
+
+  footer{ background:var(--indigo-2); color:rgba(255,255,255,0.7); padding:60px 0 30px; }
+  .footer-grid{ display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:40px; margin-bottom:50px; }
+  .footer-brand .brand{ color:var(--white); }
+  .footer-brand p{ font-size:14px; margin-top:14px; max-width:280px; }
+  .footer-col h5{ color:var(--white); font-size:14px; margin-bottom:16px; font-weight:600; }
+  .footer-col a{ display:block; font-size:14px; margin-bottom:10px; transition:color .25s ease; }
+  .footer-col a:hover{ color:var(--marigold); }
+  .footer-bottom{ border-top:1px solid rgba(255,255,255,0.1); padding-top:24px; display:flex; justify-content:space-between; font-size:13px; flex-wrap:wrap; gap:10px; }
+
+  @media (max-width:980px){
+    .hero-grid{ grid-template-columns:1fr; }
+    .fleet-grid, .routes-grid, .tours-grid, .testi-grid{ grid-template-columns:repeat(2,1fr); }
+    .why-grid{ grid-template-columns:repeat(2,1fr); }
+    .footer-grid{ grid-template-columns:1fr 1fr; }
+  }
+  @media (max-width:720px){
+    .navlinks{ display:none; }
+    .navmenu-btn{ display:block; }
+    .navphone{ font-size:12.5px; gap:6px; }
+    .navphone .ico{ width:30px; height:30px; font-size:13px; }
+    .hero h1{ font-size:36px; }
+    .hero-stats{ flex-wrap:wrap; gap:24px; }
+    section{ padding:70px 0; }
+    .section-head h2{ font-size:28px; }
+    .fleet-grid, .routes-grid, .tours-grid, .testi-grid, .why-grid{ grid-template-columns:1fr; }
+    .footer-grid{ grid-template-columns:1fr; }
+    .book-row{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <nav>
+      <a href="#home" class="brand"><span class="mark">KC</span>Kashi Cabs</a>
+      <div class="navlinks">
+        <a href="#fleet">Fleet</a>
+        <a href="#routes">Routes & Fares</a>
+        <a href="#tours">Tour Packages</a>
+        <a href="#why">Why Us</a>
+      </div>
+      <a href="tel:+916202721881" class="navphone"><span class="ico">☎</span><span>+91 62027 21881</span></a>
+      <button class="navmenu-btn">☰</button>
+    </nav>
+  </div>
+</header>
+
+<section class="hero" id="home">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <div class="hero-tag">🚕 Available 24×7 across Varanasi</div>
+        <h1>Varanasi, <span class="accent">unhurried</span> — from the ghats to your gate</h1>
+        <p>Airport transfers, outstation trips and full-day ghat tours with local drivers who know every lane. Clean cars, fixed fares, no last-minute surprises.</p>
+        <div class="hero-stats">
+          <div class="stat"><b>12+</b><span>years on the road</span></div>
+          <div class="stat"><b>40,000+</b><span>trips completed</span></div>
+          <div class="stat"><b>4.8★</b><span>average rating</span></div>
+        </div>
+      </div>
+
+      <div class="book-card">
+        <h3>Book your ride</h3>
+        <p>Instant confirmation, fixed pricing.</p>
+        <div class="book-tabs">
+          <button class="book-tab active">One Way</button>
+          <button class="book-tab">Round Trip</button>
+          <button class="book-tab">Airport</button>
+        </div>
+        <div class="book-field" style="position:relative;">
+          <label>Pickup location</label>
+          <input type="text" id="pickupInput" placeholder="e.g. Assi Ghat, Varanasi" autocomplete="off">
+          <div class="suggest-box" id="pickupSuggest"></div>
+        </div>
+        <div class="book-field" style="position:relative;">
+          <label>Drop location</label>
+          <input type="text" id="dropInput" placeholder="e.g. Sarnath / Babatpur Airport" autocomplete="off">
+          <div class="suggest-box" id="dropSuggest"></div>
+        </div>
+        <div class="book-field">
+          <label>Phone number *</label>
+          <div style="display:flex; gap:8px;">
+            <input type="tel" id="phoneInput" placeholder="10-digit mobile number" maxlength="10" inputmode="numeric" style="flex:1;">
+            <button type="button" id="sendOtpBtn" style="white-space:nowrap; background:rgba(255,255,255,0.12); color:var(--white); border:1px solid rgba(255,255,255,0.2); border-radius:10px; padding:0 16px; font-size:13px; font-weight:600;">Send OTP</button>
+          </div>
+          <div id="phoneError" style="display:none; color:#ffb199; font-size:12px; margin-top:7px;">Enter a valid 10-digit mobile number</div>
+          <div id="otpRow" style="display:none; margin-top:12px; gap:8px; flex-direction:column;">
+            <div style="display:flex; gap:8px;">
+              <input type="tel" id="otpInput" placeholder="6-digit OTP" maxlength="6" inputmode="numeric" style="flex:1;">
+              <button type="button" id="verifyOtpBtn" style="white-space:nowrap; background:var(--marigold); color:var(--indigo-2); border:none; border-radius:10px; padding:0 16px; font-size:13px; font-weight:700;">Verify</button>
+            </div>
+            <div id="otpStatus" style="font-size:12px; color:rgba(255,255,255,0.55);">OTP sent — enter the 6-digit code</div>
+          </div>
+          <div id="phoneVerifiedMsg" style="display:none; color:#8fe3a1; font-size:13px; margin-top:8px; font-weight:600;">✓ Phone number verified</div>
+        </div>
+        <div class="book-field" id="distanceBox" style="display:none; background:rgba(255,255,255,0.08); border-radius:10px; padding:12px 14px;">
+          <div style="display:flex; justify-content:space-between; font-size:13.5px; color:rgba(255,255,255,0.8);">
+            <span id="distanceText"></span>
+            <span id="durationText"></span>
+          </div>
+          <div style="font-family:'Fraunces',serif; font-size:20px; color:var(--marigold); margin-top:6px;" id="fareEstimateText"></div>
+          <div class="route-map" id="routeMap"></div>
+        </div>
+        <div class="book-row">
+          <div class="book-field">
+            <label>Date</label>
+            <input type="date" id="tripDate">
+          </div>
+          <div class="book-field">
+            <label>Time</label>
+            <input type="time" id="tripTime">
+          </div>
+        </div>
+        <div class="book-field">
+          <label>Car type</label>
+          <select id="carType">
+            <option value="11">Hatchback — Swift Dzire or similar</option>
+            <option value="13">Sedan — Etios or similar</option>
+            <option value="17">SUV — Ertiga / Innova</option>
+          </select>
+        </div>
+        <button class="book-submit" id="bookSubmitBtn">Check Fare & Book</button>
+        <div class="book-note">Or call +91 62027 21881 for instant booking</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="fleet" id="fleet">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-tag">Our Fleet</div>
+      <h2>A car for every kind of trip</h2>
+      <p>All vehicles are sanitised, GPS-tracked and driven by verified local drivers.</p>
+    </div>
+    <div class="fleet-grid">
+      <div class="fleet-card">
+        <div class="fleet-img">🚗</div>
+        <div class="fleet-body">
+          <h4>Hatchback</h4>
+          <div class="meta">Swift Dzire or similar · 4 seats · 2 bags</div>
+          <div class="price">₹11<span>/km</span></div>
+        </div>
+      </div>
+      <div class="fleet-card">
+        <div class="fleet-img">🚙</div>
+        <div class="fleet-body">
+          <h4>Sedan</h4>
+          <div class="meta">Etios or similar · 4 seats · 3 bags</div>
+          <div class="price">₹13<span>/km</span></div>
+        </div>
+      </div>
+      <div class="fleet-card">
+        <div class="fleet-img">🚐</div>
+        <div class="fleet-body">
+          <h4>SUV</h4>
+          <div class="meta">Ertiga / Innova · 6-7 seats · 4 bags</div>
+          <div class="price">₹17<span>/km</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="routes" id="routes">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-tag">Popular Routes</div>
+      <h2>Fixed fares, no meter surprises</h2>
+      <p>One-way pricing for the most requested routes out of Varanasi. Custom routes quoted on request.</p>
+    </div>
+    <div class="routes-grid">
+      <div class="route-card">
+        <div class="route-path">Varanasi <span class="arrow">→</span> Sarnath</div>
+        <div class="route-dist">13 km · approx 25 min</div>
+        <div class="route-price"><b>₹450</b><a href="tel:+916202721881">Book</a></div>
+      </div>
+      <div class="route-card">
+        <div class="route-path">Varanasi <span class="arrow">→</span> Babatpur Airport</div>
+        <div class="route-dist">26 km · approx 45 min</div>
+        <div class="route-price"><b>₹700</b><a href="tel:+916202721881">Book</a></div>
+      </div>
+      <div class="route-card">
+        <div class="route-path">Varanasi <span class="arrow">→</span> Prayagraj</div>
+        <div class="route-dist">122 km · approx 2.5 hrs</div>
+        <div class="route-price"><b>₹2,400</b><a href="tel:+916202721881">Book</a></div>
+      </div>
+      <div class="route-card">
+        <div class="route-path">Varanasi <span class="arrow">→</span> Ayodhya</div>
+        <div class="route-dist">200 km · approx 4 hrs</div>
+        <div class="route-price"><b>₹3,800</b><a href="tel:+916202721881">Book</a></div>
+      </div>
+      <div class="route-card">
+        <div class="route-path">Varanasi <span class="arrow">→</span> Vindhyachal</div>
+        <div class="route-dist">90 km · approx 2 hrs</div>
+        <div class="route-price"><b>₹1,900</b><a href="tel:+916202721881">Book</a></div>
+      </div>
+      <div class="route-card">
+        <div class="route-path">Varanasi <span class="arrow">→</span> Lucknow</div>
+        <div class="route-dist">290 km · approx 5.5 hrs</div>
+        <div class="route-price"><b>₹5,200</b><a href="tel:+916202721881">Book</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="why" id="why">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-tag">Why Kashi Cabs</div>
+      <h2>What you get on every trip</h2>
+    </div>
+    <div class="why-grid">
+      <div class="why-item">
+        <div class="icon">🛡️</div>
+        <h4>Verified drivers</h4>
+        <p>Background-checked, licensed drivers who know the city's routes and rhythms.</p>
+      </div>
+      <div class="why-item">
+        <div class="icon">💰</div>
+        <h4>Fixed, upfront fares</h4>
+        <p>Your fare is confirmed before you get in — no metered surprises at the end.</p>
+      </div>
+      <div class="why-item">
+        <div class="icon">🕓</div>
+        <h4>24×7 availability</h4>
+        <p>Early ghat visits or late-night arrivals — we run around the clock.</p>
+      </div>
+      <div class="why-item">
+        <div class="icon">📍</div>
+        <h4>Live trip tracking</h4>
+        <p>Every car is GPS-tracked, so you or your family can follow the trip live.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="tours" id="tours">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-tag">Tour Packages</div>
+      <h2>See Varanasi properly, not just pass through it</h2>
+      <p>Half-day and full-day packages with a driver who doubles as a local guide.</p>
+    </div>
+    <div class="tours-grid">
+      <div class="tour-card">
+        <div class="tour-img"><span class="tour-badge">Half Day</span></div>
+        <div class="tour-body">
+          <h4>Ghats & Old City</h4>
+          <p>A morning boat-ready drop, old city lanes, and the main ghats at your pace.</p>
+          <div class="stops">Assi Ghat · Dashashwamedh · Kashi Vishwanath</div>
+          <div class="tour-foot"><b>₹1,500</b><a href="tel:+916202721881" style="font-size:13.5px;font-weight:600;color:var(--indigo);border-bottom:1px solid var(--indigo);">Enquire</a></div>
+        </div>
+      </div>
+      <div class="tour-card">
+        <div class="tour-img"><span class="tour-badge">Full Day</span></div>
+        <div class="tour-body">
+          <h4>Varanasi + Sarnath</h4>
+          <p>City sights in the morning, Sarnath's Buddhist sites in the afternoon.</p>
+          <div class="stops">Kashi Vishwanath · Sarnath Stupa · New Vishwanath Temple</div>
+          <div class="tour-foot"><b>₹2,800</b><a href="tel:+916202721881" style="font-size:13.5px;font-weight:600;color:var(--indigo);border-bottom:1px solid var(--indigo);">Enquire</a></div>
+        </div>
+      </div>
+      <div class="tour-card">
+        <div class="tour-img"><span class="tour-badge">Evening</span></div>
+        <div class="tour-body">
+          <h4>Ganga Aarti Special</h4>
+          <p>Timed drop and pickup around the evening aarti, with a good viewing spot arranged.</p>
+          <div class="stops">Dashashwamedh Ghat · Assi Ghat</div>
+          <div class="tour-foot"><b>₹900</b><a href="tel:+916202721881" style="font-size:13.5px;font-weight:600;color:var(--indigo);border-bottom:1px solid var(--indigo);">Enquire</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="testi">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-tag">Reviews</div>
+      <h2>What riders say</h2>
+    </div>
+    <div class="testi-grid">
+      <div class="testi-card">
+        <div class="stars">★★★★★</div>
+        <p>"Driver was waiting at the airport with a name board, car was spotless. Fare matched exactly what was quoted on the phone."</p>
+        <div class="testi-who"><div class="testi-avatar">R</div><div><b>Rajeev M.</b><span>Airport transfer</span></div></div>
+      </div>
+      <div class="testi-card">
+        <div class="stars">★★★★★</div>
+        <p>"Booked the Sarnath half-day package. Driver knew the history of every stop better than our hotel guide did."</p>
+        <div class="testi-who"><div class="testi-avatar">S</div><div><b>Sneha K.</b><span>Half-day tour</span></div></div>
+      </div>
+      <div class="testi-card">
+        <div class="stars">★★★★★</div>
+        <p>"Took the Innova to Prayagraj and back same day. Comfortable car, careful driver, no unnecessary stops."</p>
+        <div class="testi-who"><div class="testi-avatar">A</div><div><b>Amit S.</b><span>Outstation trip</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="cta-band">
+  <div class="wrap">
+    <h2>Ready for your ride?</h2>
+    <p>Book online in under a minute, or call us directly for immediate dispatch.</p>
+    <div class="cta-buttons">
+      <a href="#home" class="btn-white">Book a Cab</a>
+      <a href="tel:+916202721881" class="btn-outline-w">Call +91 62027 21881</a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="#home" class="brand"><span class="mark">KC</span>Kashi Cabs</a>
+        <p>Reliable, fixed-fare taxi service across Varanasi — local rides, outstation trips, airport transfers and guided tours.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Services</h5>
+        <a href="#fleet">Local Rides</a>
+        <a href="#routes">Outstation Trips</a>
+        <a href="#tours">Tour Packages</a>
+        <a href="#home">Airport Transfers</a>
+      </div>
+      <div class="footer-col">
+        <h5>Company</h5>
+        <a href="#why">Why Us</a>
+        <a href="#">Fleet</a>
+        <a href="#">Careers</a>
+      </div>
+      <div class="footer-col">
+        <h5>Contact</h5>
+        <a href="tel:+916202721881">+91 62027 21881</a>
+        <a href="mailto:riteshkumarrr2694@gmail.com">riteshkumarrr2694@gmail.com</a>
+        <a href="#">Cantonment, Varanasi, UP</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Kashi Cabs. All rights reserved.</span>
+      <span>Terms of Service · Privacy Policy</span>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+  document.querySelectorAll('.book-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      document.querySelectorAll('.book-tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+    });
+  });
+
+  // --- Email notifications (Web3Forms — free, no backend needed) ---
+  // Sign up free at https://web3forms.com with your email to get an access key,
+  // then paste it below in place of YOUR_WEB3FORMS_ACCESS_KEY.
+  const WEB3FORMS_ACCESS_KEY = 'YOUR_WEB3FORMS_ACCESS_KEY';
+
+  function sendNotification(subject, fields){
+    if(WEB3FORMS_ACCESS_KEY === 'YOUR_WEB3FORMS_ACCESS_KEY'){
+      console.warn('Web3Forms access key not set — email notification skipped.');
+      return;
+    }
+    fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        access_key: WEB3FORMS_ACCESS_KEY,
+        subject: subject,
+        from_name: 'Kashi Cabs Website',
+        ...fields
+      })
+    }).catch(err => console.error('Notification failed:', err));
+  }
+
+  let lastFareCheckKey = null;
+
+  // --- Phone OTP verification (2Factor.in — free, no credit card required) ---
+  // 1. Go to https://2factor.in and sign up with just your email (no card).
+  // 2. In your dashboard, copy your API key.
+  // 3. Paste it below in place of YOUR_2FACTOR_API_KEY.
+  // Note: because this is a fully static site with no server, the API key
+  // lives in the page's own code and is technically visible to anyone who
+  // views the page source. For a small business site this is a normal,
+  // accepted trade-off — just keep an eye on your 2Factor.in usage/balance.
+  const TWOFACTOR_API_KEY = 'YOUR_2FACTOR_API_KEY';
+
+  let otpSessionId = null;
+  let isPhoneVerified = false;
+
+  document.getElementById('sendOtpBtn').addEventListener('click', ()=>{
+    const phone = document.getElementById('phoneInput').value.trim();
+    if(!isValidPhone(phone)){
+      document.getElementById('phoneError').style.display = 'block';
+      return;
+    }
+    document.getElementById('phoneError').style.display = 'none';
+
+    if(TWOFACTOR_API_KEY === 'YOUR_2FACTOR_API_KEY'){
+      alert('OTP verification isn\'t set up yet on this site. Add your 2Factor.in API key to enable it.');
+      return;
+    }
+
+    const btn = document.getElementById('sendOtpBtn');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    fetch(`https://2factor.in/API/V1/${TWOFACTOR_API_KEY}/SMS/${phone}/AUTOGEN`)
+      .then(res => res.json())
+      .then(data => {
+        if(data.Status !== 'Success') throw new Error(data.Details || 'Failed to send OTP');
+
+        otpSessionId = data.Details;
+        document.getElementById('otpRow').style.display = 'flex';
+        document.getElementById('otpStatus').textContent = 'OTP sent — enter the 6-digit code';
+        document.getElementById('otpStatus').style.color = 'rgba(255,255,255,0.55)';
+        btn.textContent = 'Resend OTP';
+        btn.disabled = false;
+
+        sendNotification('Someone requested an OTP on your website', {
+          'Phone Number': phone,
+          'Pickup': document.getElementById('pickupInput').value || '(not entered yet)',
+          'Drop': document.getElementById('dropInput').value || '(not entered yet)'
+        });
+      })
+      .catch((error)=>{
+        console.error('OTP send failed:', error);
+        document.getElementById('otpStatus').textContent = 'Could not send OTP — check the number and try again';
+        document.getElementById('otpStatus').style.color = '#ffb199';
+        document.getElementById('otpRow').style.display = 'flex';
+        btn.textContent = 'Send OTP';
+        btn.disabled = false;
+      });
+  });
+
+  document.getElementById('verifyOtpBtn').addEventListener('click', ()=>{
+    const code = document.getElementById('otpInput').value.trim();
+    if(!otpSessionId || code.length !== 6){
+      document.getElementById('otpStatus').textContent = 'Enter the 6-digit code you received';
+      document.getElementById('otpStatus').style.color = '#ffb199';
+      return;
+    }
+
+    fetch(`https://2factor.in/API/V1/${TWOFACTOR_API_KEY}/SMS/VERIFY/${otpSessionId}/${code}`)
+      .then(res => res.json())
+      .then(data => {
+        if(data.Status !== 'Success' || data.Details !== 'OTP Matched'){
+          document.getElementById('otpStatus').textContent = 'Incorrect code — please try again';
+          document.getElementById('otpStatus').style.color = '#ffb199';
+          return;
+        }
+
+        isPhoneVerified = true;
+        document.getElementById('otpRow').style.display = 'none';
+        document.getElementById('sendOtpBtn').style.display = 'none';
+        document.getElementById('phoneInput').disabled = true;
+        document.getElementById('phoneVerifiedMsg').style.display = 'block';
+
+        const phone = document.getElementById('phoneInput').value.trim();
+        sendNotification('Phone number verified on your website', {
+          'Phone Number': phone,
+          'Pickup': document.getElementById('pickupInput').value || '(not entered yet)',
+          'Drop': document.getElementById('dropInput').value || '(not entered yet)'
+        });
+
+        calculateDistance(); // reveal the fare now, if a route is already selected
+      })
+      .catch(()=>{
+        document.getElementById('otpStatus').textContent = 'Verification failed — check your connection and try again';
+        document.getElementById('otpStatus').style.color = '#ffb199';
+      });
+  });
+
+  // --- Free location search (OpenStreetMap Nominatim) + distance calc (OSRM) ---
+  // No API key, no billing account, no signup required.
+
+  // Wide bounding box covering Varanasi and common outstation destinations
+  // (Sarnath, Prayagraj, Ayodhya, Vindhyachal, Lucknow) so real results near
+  // those places rank well too — bounded=0 means this only BIASES results,
+  // it never excludes a valid match outside the box.
+  const SEARCH_VIEWBOX = '80.5,27.2,83.5,24.5'; // left,top,right,bottom
+
+  let pickupCoords = null; // {lat, lon}
+  let dropCoords = null;
+  let debounceTimer = null;
+  let leafletMap = null;
+  let pickupMarker = null, dropMarker = null, routeLine = null;
+
+  function ensureMap(){
+    if(leafletMap) return leafletMap;
+    const mapEl = document.getElementById('routeMap');
+    mapEl.style.display = 'block';
+    leafletMap = L.map('routeMap', { zoomControl:false, attributionControl:false })
+      .setView([25.3176, 82.9739], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18
+    }).addTo(leafletMap);
+    return leafletMap;
+  }
+
+  function setupLocationSearch(inputId, suggestBoxId, onSelect){
+    const input = document.getElementById(inputId);
+    const box = document.getElementById(suggestBoxId);
+
+    input.addEventListener('input', ()=>{
+      const query = input.value.trim();
+      onSelect(null); // clear stored coords until a suggestion is picked
+      document.getElementById('distanceBox').style.display = 'none';
+
+      clearTimeout(debounceTimer);
+      if(query.length < 3){ box.style.display = 'none'; box.innerHTML=''; return; }
+
+      debounceTimer = setTimeout(()=>fetchSuggestions(query, box, (place)=>{
+        input.value = place.display_name;
+        box.style.display = 'none';
+        onSelect({ lat: parseFloat(place.lat), lon: parseFloat(place.lon) });
+        calculateDistance();
+      }), 400);
+    });
+
+    document.addEventListener('click', (e)=>{
+      if(!box.contains(e.target) && e.target !== input) box.style.display = 'none';
+    });
+  }
+
+  function fetchSuggestions(query, box, onPick){
+    box.innerHTML = '<div class="suggest-loading">Searching…</div>';
+    box.style.display = 'block';
+
+    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&countrycodes=in&viewbox=${SEARCH_VIEWBOX}&bounded=0&q=${encodeURIComponent(query)}`;
+
+    fetch(url, { headers: { 'Accept-Language': 'en' } })
+      .then(res => res.json())
+      .then(results => {
+        if(!results || results.length === 0){
+          box.innerHTML = '<div class="suggest-loading">No matches found</div>';
+          return;
+        }
+        box.innerHTML = '';
+        results.forEach(place=>{
+          const item = document.createElement('div');
+          item.className = 'suggest-item';
+          item.textContent = place.display_name;
+          item.addEventListener('click', ()=>onPick(place));
+          box.appendChild(item);
+        });
+      })
+      .catch(()=>{
+        box.innerHTML = '<div class="suggest-loading">Search failed — try again</div>';
+      });
+  }
+
+  function isValidPhone(value){
+    return /^[6-9]\d{9}$/.test(value.trim());
+  }
+
+  function calculateDistance(){
+    if(!pickupCoords || !dropCoords) return;
+
+    if(!isPhoneVerified){
+      // Fare is intentionally withheld until the phone number is OTP-verified
+      document.getElementById('distanceBox').style.display = 'none';
+      return;
+    }
+    const phone = document.getElementById('phoneInput').value;
+
+    // overview=full + geojson gives us the actual road-following route
+    // (not a straight line) so the map and the distance match reality.
+    const url = `https://router.project-osrm.org/route/v1/driving/${pickupCoords.lon},${pickupCoords.lat};${dropCoords.lon},${dropCoords.lat}?overview=full&geometries=geojson`;
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data=>{
+        if(data.code !== 'Ok' || !data.routes || !data.routes.length){
+          document.getElementById('distanceText').textContent = 'No driving route found between these points';
+          document.getElementById('durationText').textContent = '';
+          document.getElementById('fareEstimateText').textContent = '';
+          document.getElementById('distanceBox').style.display = 'block';
+          return;
+        }
+
+        const route = data.routes[0];
+        const distanceKm = route.distance / 1000;
+        const durationMin = Math.round(route.duration / 60);
+        const perKm = parseFloat(document.getElementById('carType').value);
+        const fare = Math.round(distanceKm * perKm);
+
+        document.getElementById('distanceText').textContent = `${distanceKm.toFixed(1)} km`;
+        document.getElementById('durationText').textContent = durationMin < 60
+          ? `${durationMin} min`
+          : `${Math.floor(durationMin/60)} hr ${durationMin%60} min`;
+        document.getElementById('fareEstimateText').textContent = `Estimated fare: ₹${fare}`;
+        document.getElementById('distanceBox').style.display = 'block';
+
+        drawRouteOnMap(route.geometry.coordinates);
+
+        // Notify you once per unique pickup/drop pair (not on every recalculation)
+        const routeKey = `${document.getElementById('pickupInput').value}→${document.getElementById('dropInput').value}`;
+        if(routeKey !== lastFareCheckKey){
+          lastFareCheckKey = routeKey;
+          sendNotification('Someone checked a fare on your website', {
+            'Phone Number': phone,
+            'Pickup': document.getElementById('pickupInput').value,
+            'Drop': document.getElementById('dropInput').value,
+            'Distance': `${distanceKm.toFixed(1)} km`,
+            'Estimated Fare': `₹${fare}`,
+            'Car Type': document.getElementById('carType').selectedOptions[0].textContent
+          });
+        }
+      })
+      .catch(()=>{
+        document.getElementById('distanceText').textContent = 'Could not calculate distance — check your connection';
+        document.getElementById('durationText').textContent = '';
+        document.getElementById('fareEstimateText').textContent = '';
+        document.getElementById('distanceBox').style.display = 'block';
+      });
+  }
+
+  function drawRouteOnMap(coordsLonLat){
+    const map = ensureMap();
+    // OSRM returns [lon, lat] pairs — Leaflet wants [lat, lon]
+    const latLngs = coordsLonLat.map(c => [c[1], c[0]]);
+
+    if(routeLine) map.removeLayer(routeLine);
+    if(pickupMarker) map.removeLayer(pickupMarker);
+    if(dropMarker) map.removeLayer(dropMarker);
+
+    routeLine = L.polyline(latLngs, { color: '#E8A33D', weight: 4 }).addTo(map);
+    pickupMarker = L.marker([pickupCoords.lat, pickupCoords.lon]).addTo(map).bindPopup('Pickup');
+    dropMarker = L.marker([dropCoords.lat, dropCoords.lon]).addTo(map).bindPopup('Drop');
+
+    map.fitBounds(routeLine.getBounds(), { padding: [20, 20] });
+    setTimeout(()=>map.invalidateSize(), 200); // fixes rendering if map was hidden when initialized
+  }
+
+  document.getElementById('bookSubmitBtn').addEventListener('click', ()=>{
+    const phone = document.getElementById('phoneInput').value;
+    if(!isPhoneVerified){
+      alert('Please verify your phone number with the OTP before booking.');
+      document.getElementById('phoneInput').focus();
+      return;
+    }
+
+    const pickup = document.getElementById('pickupInput').value || '(not entered)';
+    const drop = document.getElementById('dropInput').value || '(not entered)';
+    const date = document.getElementById('tripDate').value || '(not entered)';
+    const time = document.getElementById('tripTime').value || '(not entered)';
+    const carType = document.getElementById('carType').selectedOptions[0].textContent;
+    const fareText = document.getElementById('fareEstimateText').textContent || 'Not calculated';
+
+    sendNotification('New booking request from your website', {
+      'Phone Number': phone,
+      'Pickup': pickup,
+      'Drop': drop,
+      'Date': date,
+      'Time': time,
+      'Car Type': carType,
+      'Fare Estimate': fareText
+    });
+
+    alert('Thanks — your booking request has been noted. A dispatcher will confirm your fare and driver shortly.');
+  });
+
+  // Keep the phone field digits-only as the user types
+  document.getElementById('phoneInput').addEventListener('input', (e)=>{
+    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
+    document.getElementById('phoneError').style.display = 'none';
+  });
+
+  setupLocationSearch('pickupInput', 'pickupSuggest', (coords)=>{ pickupCoords = coords; });
+  setupLocationSearch('dropInput', 'dropSuggest', (coords)=>{ dropCoords = coords; });
+  document.getElementById('carType').addEventListener('change', calculateDistance);
+</script>
+
+</body>
+</html>
