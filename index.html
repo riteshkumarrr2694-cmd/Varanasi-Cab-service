@@ -233,19 +233,8 @@
         </div>
         <div class="book-field">
           <label>Phone number *</label>
-          <div style="display:flex; gap:8px;">
-            <input type="tel" id="phoneInput" placeholder="10-digit mobile number" maxlength="10" inputmode="numeric" style="flex:1;">
-            <button type="button" id="sendOtpBtn" style="white-space:nowrap; background:rgba(255,255,255,0.12); color:var(--white); border:1px solid rgba(255,255,255,0.2); border-radius:10px; padding:0 16px; font-size:13px; font-weight:600;">Send OTP</button>
-          </div>
-          <div id="phoneError" style="display:none; color:#ffb199; font-size:12px; margin-top:7px;">Enter a valid 10-digit mobile number</div>
-          <div id="otpRow" style="display:none; margin-top:12px; gap:8px; flex-direction:column;">
-            <div style="display:flex; gap:8px;">
-              <input type="tel" id="otpInput" placeholder="6-digit OTP" maxlength="6" inputmode="numeric" style="flex:1;">
-              <button type="button" id="verifyOtpBtn" style="white-space:nowrap; background:var(--marigold); color:var(--indigo-2); border:none; border-radius:10px; padding:0 16px; font-size:13px; font-weight:700;">Verify</button>
-            </div>
-            <div id="otpStatus" style="font-size:12px; color:rgba(255,255,255,0.55);">OTP sent — enter the 6-digit code</div>
-          </div>
-          <div id="phoneVerifiedMsg" style="display:none; color:#8fe3a1; font-size:13px; margin-top:8px; font-weight:600;">✓ Phone number verified</div>
+          <input type="tel" id="phoneInput" placeholder="10-digit mobile number" maxlength="10" inputmode="numeric">
+          <div id="phoneError" style="display:none; color:#ffb199; font-size:12px; margin-top:7px;">Enter a valid 10-digit mobile number to see the fare estimate</div>
         </div>
         <div class="book-field" id="distanceBox" style="display:none; background:rgba(255,255,255,0.08); border-radius:10px; padding:12px 14px;">
           <div style="display:flex; justify-content:space-between; font-size:13.5px; color:rgba(255,255,255,0.8);">
@@ -531,102 +520,11 @@
   }
 
   let lastFareCheckKey = null;
+  let lastNotifiedPhone = null;
 
-  // --- Phone OTP verification (2Factor.in — free, no credit card required) ---
-  // 1. Go to https://2factor.in and sign up with just your email (no card).
-  // 2. In your dashboard, copy your API key.
-  // 3. Paste it below in place of YOUR_2FACTOR_API_KEY.
-  // Note: because this is a fully static site with no server, the API key
-  // lives in the page's own code and is technically visible to anyone who
-  // views the page source. For a small business site this is a normal,
-  // accepted trade-off — just keep an eye on your 2Factor.in usage/balance.
-  const TWOFACTOR_API_KEY = 'YOUR_2FACTOR_API_KEY';
-
-  let otpSessionId = null;
-  let isPhoneVerified = false;
-
-  document.getElementById('sendOtpBtn').addEventListener('click', ()=>{
-    const phone = document.getElementById('phoneInput').value.trim();
-    if(!isValidPhone(phone)){
-      document.getElementById('phoneError').style.display = 'block';
-      return;
-    }
-    document.getElementById('phoneError').style.display = 'none';
-
-    if(TWOFACTOR_API_KEY === 'YOUR_2FACTOR_API_KEY'){
-      alert('OTP verification isn\'t set up yet on this site. Add your 2Factor.in API key to enable it.');
-      return;
-    }
-
-    const btn = document.getElementById('sendOtpBtn');
-    btn.disabled = true;
-    btn.textContent = 'Sending…';
-
-    fetch(`https://2factor.in/API/V1/${TWOFACTOR_API_KEY}/SMS/${phone}/AUTOGEN`)
-      .then(res => res.json())
-      .then(data => {
-        if(data.Status !== 'Success') throw new Error(data.Details || 'Failed to send OTP');
-
-        otpSessionId = data.Details;
-        document.getElementById('otpRow').style.display = 'flex';
-        document.getElementById('otpStatus').textContent = 'OTP sent — enter the 6-digit code';
-        document.getElementById('otpStatus').style.color = 'rgba(255,255,255,0.55)';
-        btn.textContent = 'Resend OTP';
-        btn.disabled = false;
-
-        sendNotification('Someone requested an OTP on your website', {
-          'Phone Number': phone,
-          'Pickup': document.getElementById('pickupInput').value || '(not entered yet)',
-          'Drop': document.getElementById('dropInput').value || '(not entered yet)'
-        });
-      })
-      .catch((error)=>{
-        console.error('OTP send failed:', error);
-        document.getElementById('otpStatus').textContent = 'Could not send OTP — check the number and try again';
-        document.getElementById('otpStatus').style.color = '#ffb199';
-        document.getElementById('otpRow').style.display = 'flex';
-        btn.textContent = 'Send OTP';
-        btn.disabled = false;
-      });
-  });
-
-  document.getElementById('verifyOtpBtn').addEventListener('click', ()=>{
-    const code = document.getElementById('otpInput').value.trim();
-    if(!otpSessionId || code.length !== 6){
-      document.getElementById('otpStatus').textContent = 'Enter the 6-digit code you received';
-      document.getElementById('otpStatus').style.color = '#ffb199';
-      return;
-    }
-
-    fetch(`https://2factor.in/API/V1/${TWOFACTOR_API_KEY}/SMS/VERIFY/${otpSessionId}/${code}`)
-      .then(res => res.json())
-      .then(data => {
-        if(data.Status !== 'Success' || data.Details !== 'OTP Matched'){
-          document.getElementById('otpStatus').textContent = 'Incorrect code — please try again';
-          document.getElementById('otpStatus').style.color = '#ffb199';
-          return;
-        }
-
-        isPhoneVerified = true;
-        document.getElementById('otpRow').style.display = 'none';
-        document.getElementById('sendOtpBtn').style.display = 'none';
-        document.getElementById('phoneInput').disabled = true;
-        document.getElementById('phoneVerifiedMsg').style.display = 'block';
-
-        const phone = document.getElementById('phoneInput').value.trim();
-        sendNotification('Phone number verified on your website', {
-          'Phone Number': phone,
-          'Pickup': document.getElementById('pickupInput').value || '(not entered yet)',
-          'Drop': document.getElementById('dropInput').value || '(not entered yet)'
-        });
-
-        calculateDistance(); // reveal the fare now, if a route is already selected
-      })
-      .catch(()=>{
-        document.getElementById('otpStatus').textContent = 'Verification failed — check your connection and try again';
-        document.getElementById('otpStatus').style.color = '#ffb199';
-      });
-  });
+  function isValidPhone(value){
+    return /^[6-9]\d{9}$/.test(value.trim());
+  }
 
   // --- Free location search (OpenStreetMap Nominatim) + distance calc (OSRM) ---
   // No API key, no billing account, no signup required.
@@ -707,19 +605,17 @@
       });
   }
 
-  function isValidPhone(value){
-    return /^[6-9]\d{9}$/.test(value.trim());
-  }
-
   function calculateDistance(){
     if(!pickupCoords || !dropCoords) return;
 
-    if(!isPhoneVerified){
-      // Fare is intentionally withheld until the phone number is OTP-verified
+    const phone = document.getElementById('phoneInput').value;
+    if(!isValidPhone(phone)){
+      // Fare is intentionally withheld until a valid phone number is entered
+      document.getElementById('phoneError').style.display = 'block';
       document.getElementById('distanceBox').style.display = 'none';
       return;
     }
-    const phone = document.getElementById('phoneInput').value;
+    document.getElementById('phoneError').style.display = 'none';
 
     // overview=full + geojson gives us the actual road-following route
     // (not a straight line) so the map and the distance match reality.
@@ -792,9 +688,10 @@
 
   document.getElementById('bookSubmitBtn').addEventListener('click', ()=>{
     const phone = document.getElementById('phoneInput').value;
-    if(!isPhoneVerified){
-      alert('Please verify your phone number with the OTP before booking.');
+    if(!isValidPhone(phone)){
+      document.getElementById('phoneError').style.display = 'block';
       document.getElementById('phoneInput').focus();
+      alert('Please enter a valid 10-digit phone number before booking.');
       return;
     }
 
@@ -818,10 +715,26 @@
     alert('Thanks — your booking request has been noted. A dispatcher will confirm your fare and driver shortly.');
   });
 
-  // Keep the phone field digits-only as the user types
+  // Notify you the moment a visitor enters a valid phone number, and reveal
+  // the fare automatically once both the route and phone number are ready.
   document.getElementById('phoneInput').addEventListener('input', (e)=>{
-    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
-    document.getElementById('phoneError').style.display = 'none';
+    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10); // digits only, max 10
+    const phone = e.target.value;
+
+    if(isValidPhone(phone)){
+      document.getElementById('phoneError').style.display = 'none';
+      if(phone !== lastNotifiedPhone){
+        lastNotifiedPhone = phone;
+        sendNotification('Someone entered their phone number on your website', {
+          'Phone Number': phone,
+          'Pickup': document.getElementById('pickupInput').value || '(not entered yet)',
+          'Drop': document.getElementById('dropInput').value || '(not entered yet)'
+        });
+      }
+      calculateDistance(); // reveal the fare now, if a route is already selected
+    } else {
+      document.getElementById('distanceBox').style.display = 'none';
+    }
   });
 
   setupLocationSearch('pickupInput', 'pickupSuggest', (coords)=>{ pickupCoords = coords; });
